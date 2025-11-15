@@ -17,12 +17,24 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') { // sprawdzam czy metoda rejestracji 
         echo json_encode(['success' => false, 'message' => 'Nieprawidłowy format emailu']);
         exit;
     }
-    $password = password_hash($password, PASSWORD_BCRYPT);//Dlaczego: password_hash() to wbudowana funkcja PHP, która bezpiecznie szyfruje hasło. PASSWORD_BCRYPT to algorytm szyfrowania – bardzo bezpieczny.
-    $sql = "INSERT INTO users (email,username,password_hash) VALUES (?, ?, ?)";
-    //'?' to placeholdery – bezpieczne przed SQL Injection
-    $stmt = $pdo->prepare($sql); //przygotowuje zapytanie
-    $stmt->execute([$email,$username,$password_hash]); //wstawia wartości i wykonuje zapytanie
-    echo json_encode(["success"=>true,"message"=> "Rejestracja UDANA!"]);
+    $password_hash = password_hash($password, PASSWORD_BCRYPT);//Dlaczego: password_hash() to wbudowana funkcja PHP, która bezpiecznie szyfruje hasło. PASSWORD_BCRYPT to algorytm szyfrowania – bardzo bezpieczny.
+    try{
+        $sql = "INSERT INTO users (email,username,password_hash) VALUES (?, ?, ?)";
+        //'?' to placeholdery – bezpieczne przed SQL Injection
+        $stmt = $pdo->prepare($sql); //przygotowuje zapytanie
+
+        $stmt->execute([$email,$username,
+
+        $password_hash]); //wstawia wartości i wykonuje zapytanie
+        echo json_encode(["success"=>true,"message"=> "Rejestracja UDANA!"]);
+
+    } catch (PDOException $e) { 
+        if(strpos($e -> getMessage(), 'Duplicate entry') !== false) {
+            echo json_encode(['success'=> false,'message'=> 'ten email już istnieje']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Błąd bazy danych']);
+        }
+};
 }
 ?>
 
